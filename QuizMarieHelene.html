@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Marie-Hélène - Évaluation Exceptionnelle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Importation d'une police "Las Vegas" */
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&display=swap');
+
+        /* Configuration Tailwind pour un thème de jeu TV */
+        :root {
+            --color-primary: #FFD700; /* Or */
+            --color-secondary: #C0C0C0; /* Argent */
+            --color-accent: #FF4500; /* Orange Vif */
+            --bg-dark: #1a1a2e; /* Bleu Nuit */
+            --text-font: 'Anton', sans-serif;
+            --header-font: 'Bebas Neue', sans-serif;
+        }
+
+        body {
+            font-family: 'Bebas Neue', sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            /* Motif de fond subtil (facultatif) */
+            background-image: radial-gradient(circle at center, #2c2c54 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 0 40px var(--color-primary), 0 0 15px var(--color-accent);
+            border: 4px solid var(--color-primary);
+            background-color: #0d0d19; /* Plus sombre que le fond */
+            padding: 40px;
+            border-radius: 20px;
+        }
+
+        .title-neon {
+            font-family: var(--text-font);
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 
+                0 0 7px #fff,
+                0 0 10px #fff,
+                0 0 21px var(--color-primary),
+                0 0 42px var(--color-accent),
+                0 0 82px var(--color-accent),
+                0 0 92px var(--color-accent);
+            letter-spacing: 2px;
+        }
+
+        .question-card, .result-card, .summary-card {
+            min-height: 350px; /* Augmenté pour la catégorie */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.5));
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .category-header {
+            font-family: var(--text-font);
+            color: var(--color-primary);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            padding-bottom: 10px;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .quiz-button {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-family: var(--header-font);
+            letter-spacing: 1px;
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .quiz-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-true {
+            background-color: #2ECC71; /* Vert */
+            color: white;
+            box-shadow: 0 5px 0 #27AE60;
+        }
+        .btn-true:active {
+            box-shadow: 0 2px 0 #27AE60;
+            transform: translateY(3px);
+        }
+
+        .btn-false {
+            background-color: #E74C3C; /* Rouge */
+            color: white;
+            box-shadow: 0 5px 0 #C0392B;
+        }
+        .btn-false:active {
+            box-shadow: 0 2px 0 #C0392B;
+            transform: translateY(3px);
+        }
+
+        .btn-next, .btn-restart {
+            background-color: var(--color-primary);
+            color: var(--bg-dark);
+            box-shadow: 0 5px 0 #CCAE00;
+        }
+        .btn-next:active, .btn-restart:active {
+            box-shadow: 0 2px 0 #CCAE00;
+            transform: translateY(3px);
+        }
+
+        .score-display {
+            font-size: 2.5rem;
+            color: var(--color-primary);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+
+        .summary-point {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: left;
+            border-left: 5px solid var(--color-primary);
+        }
+
+        /* Confetti CSS - Simple */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0; /* Caché par défaut */
+            transition: opacity 1s;
+        }
+
+        /* Message de feedback (correct/incorrect) */
+        .feedback {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+        .correct { background-color: rgba(46, 204, 113, 0.2); color: #2ECC71; }
+        .incorrect { background-color: rgba(231, 76, 60, 0.2); color: #E74C3C; }
+        
+        .answer-reveal {
+            font-family: 'Anton', sans-serif;
+            margin-top: 10px;
+            font-size: 1.8rem;
+        }
+
+        .explanation-text {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            font-family: sans-serif;
+            font-weight: 300;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="container mx-auto">
+        <h1 class="title-neon">QUIZ PGP MHB</h1>
+
+        <!-- Zone Principale du Quiz -->
+        <div id="quiz-area">
+            
+            <!-- Affichage du Score et du Compteur de Questions -->
+            <div class="flex justify-between mb-4 text-xl">
+                <span id="score-text" class="score-display">Score: 0</span>
+                <span id="question-counter" class="text-gray-400">Question 1 / 7</span>
+            </div>
+
+            <!-- Conteneur de la Question (Visible par défaut) -->
+            <div id="question-view" class="question-card">
+                <!-- Zone pour la catégorie -->
+                <h2 id="question-category" class="category-header">Catégorie</h2>
+                
+                <p id="question-text" class="text-3xl sm:text-4xl mb-8 leading-relaxed">Chargement de la première question...</p>
+                
+                <div id="answer-buttons" class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button class="quiz-button btn-true w-full sm:w-52" onclick="answerQuestion(true)">VRAI</button>
+                    <button class="quiz-button btn-false w-full sm:w-52" onclick="answerQuestion(false)">FAUX</button>
+                </div>
+                
+                <!-- Feedback et Bouton Suivant -->
+                <div id="feedback-area" class="mt-8">
+                    <div id="feedback-message" class="feedback"></div>
+                    <button id="next-button" class="quiz-button btn-next w-full sm:w-64 mx-auto mt-4" style="display: none;" onclick="nextQuestion()">Suivant</button>
+                </div>
+            </div>
+
+            <!-- Conteneur des Résultats (Caché initialement) -->
+            <div id="result-view" class="result-card hidden">
+                <p class="title-neon text-5xl">RÉSULTATS DU QUIZ !</p>
+                <div class="flex flex-col items-center">
+                    <p class="text-4xl mt-4">Votre Score Final est :</p>
+                    <p id="final-score" class="score-display text-7xl my-6">0 / 7</p>
+                </div>
+                <div class="mt-6">
+                    <p class="text-4xl text-yellow-300 mb-8">Félicitations ! Grâce à votre score, Marie-Hélène mérite une évaluation exceptionnelle !</p>
+                    <button class="quiz-button btn-restart w-full sm:w-w-64" onclick="showSummary()">Voir le Résumé de l'Année</button>
+                </div>
+            </div>
+
+            <!-- Conteneur du Résumé de l'Année (Caché initialement) -->
+            <div id="summary-view" class="summary-card hidden">
+                <p class="title-neon text-4xl mb-8">RÉSUMÉ DE SON ANNÉE EXCEPTIONNELLE</p>
+                <div id="summary-content" class="text-xl space-y-4">
+                    <!-- Le contenu sera inséré ici par JS -->
+                </div>
+                <div class="mt-10">
+                    <button class="quiz-button btn-restart w-full sm:w-64" onclick="restartQuiz()">Recommencer le Quiz</button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Canvas pour les Confettis -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        // Définition des questions/réponses avec la nouvelle propriété "category"
+        const questions = [
+            {
+                category: "Catégorie 1 : Objectifs Rentabilité",
+                text: "Est-ce que le POD Québec a atteint un taux SGA de 27% en LM et 34% totaux ?",
+                correctAnswer: true,
+                explanation: "POD Québec a eu 48.3% Bulk + libre-marché / libre-marché 33.9%, et s’est classé #1 comparativement aux autres POD."
+            },
+            {
+                category: "Catégorie 1 : Objectifs Rentabilité",
+                text: "Est-ce que le taux d’ouverture des projets était supérieur à 90% au 1er décembre ?",
+                correctAnswer: true,
+                explanation: "Il était de 91.6% Bulk + libre-marché et un taux personnel pour Marie-Hélène de : 97%. Ils se sont classé #2 comparativement aux autres POD."
+            },
+            {
+                category: "Catégorie 1 : Objectifs Rentabilité",
+                text: "Est-ce que la livraison était inférieure à 90% ?",
+                correctAnswer: false,
+                explanation: "Elle était à 93.2% Bulk + libre-marché / un taux personnel pour Marie-Hélène de : 91%, et s’est classé #1 comparativement aux autres POD."
+            },
+            {
+                category: "Catégorie 1 : Objectifs Rentabilité",
+                text: "Est-ce que l’approbation était au-dessus de 85% ?",
+                correctAnswer: false,
+                explanation: "Malheureusement, ils étaient proches à 84.2% Bulk + libre-marché / et 83.6% personnelle. Ils ont tout de même mérité le classement #2 comparativement aux autres POD."
+            },
+            {
+                category: "Catégorie 2 : Objectifs Développement des affaires",
+                text: "Est-ce que Marie-Hélène a assuré un suivi des actions et apporter des recommandations sur son évolution, améliorant la relation avec les gestionnaires, suivi des projets, etc. ?",
+                correctAnswer: true,
+                explanation: "Elle a assuré le développement des affaires en représentant les POD, en faisant le démarchage auprès des villes sans permis, et en suivant les indicateurs clés avec des interventions ciblées."
+            },
+            {
+                category: "Catégorie 3 : Objectif Processus",
+                text: "Est-ce que Marie-Hélène a su adopter de nouveaux processus et apporter des recommandations, assurant la bonne gestion des projets en DEF et des demandes non évaluées ?",
+                correctAnswer: true,
+                explanation: "Elle a adopté le nouveau processus en apportant des recommandations, assuré l’ouverture et l’approbation en temps, collaboré avec les gestionnaires ventes pour un transfert efficace, adapté le B.O. avec des améliorations pour le rendre intuitif."
+            },
+            {
+                category: "Catégorie 4 : Implication individuelle",
+                text: "Est-ce que Marie-Hélène a atteint ses objectifs vis-à-vis l’équipe ?",
+                correctAnswer: true,
+                explanation: "Elle s’est investie pleinement pour soutenir son équipe : elle a pris en charge le ménage de TEAMS, ainsi qu’ à la création du nouveau SharePoint, participé à l’évolution du BO suivi des projets et travaillé sur le Onepager 2.0, entre autres initiatives. Toujours disponible et proactive, elle n’hésite jamais à prêter main-forte, que ce soit pour le design des cartes avec François ou pour répondre aux questions sur les processus."
+            },
+        ];
+
+        // Résumé pour la page finale
+        const summaryPoints = [
+            { title: "Optimisme face au changement", description: "Capacité à accueillir les nouveaux processus avec une attitude positive et constructive." },
+            { title: "Esprit d’entraide", description: "Toujours disponible pour soutenir les collègues et favoriser la collaboration." },
+            { title: "Orientation amélioration continue", description: "Volonté constante de faire évoluer les processus d’affaires pour accroître l’efficacité et la performance." },
+            { title: "Rigueur dans le suivi", description: "Maintien d’un BO toujours à jour, garantissant une gestion efficace." },
+            { title: "Performance constante", description: "Atteinte régulière des statistiques et objectifs demandés." }
+        ];
+
+        const nextYearObjectives = [
+            "Mettre en pratique les acquis du mentorat dans les activités quotidiennes afin d’optimiser sa performance et sa contribution à l’équipe."
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let quizActive = true;
+
+        const qCategory = document.getElementById('question-category'); // Sélection du nouvel élément
+        const qText = document.getElementById('question-text');
+        const qCounter = document.getElementById('question-counter');
+        const scoreText = document.getElementById('score-text');
+        const questionView = document.getElementById('question-view');
+        const resultView = document.getElementById('result-view');
+        const summaryView = document.getElementById('summary-view');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const answerButtons = document.getElementById('answer-buttons');
+        const nextButton = document.getElementById('next-button');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const summaryContent = document.getElementById('summary-content');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        
+        // --- Fonctions Confetti (Simplifié) ---
+        let confettiInterval;
+        let particles = [];
+        const ctx = confettiCanvas.getContext('2d');
+
+        function resizeConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfetti);
+        resizeConfetti();
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: -Math.random() * confettiCanvas.height,
+                    r: Math.random() * 8 + 2,
+                    d: Math.random() * 20 + 5,
+                    color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+                    tilt: Math.floor(Math.random() * 10) - 10
+                });
+            }
+        }
+
+        function drawConfetti() {
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x, p.y + p.tilt);
+                ctx.lineTo(p.x + p.r, p.y);
+                ctx.stroke();
+            }
+            updateConfetti();
+        }
+
+        function updateConfetti() {
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.y += Math.cos(p.d) + p.r / 2;
+                p.x += Math.sin(p.d) / 2;
+                if (p.y > confettiCanvas.height) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+            if (particles.length < 50) createConfetti();
+        }
+
+        function startConfetti() {
+            resizeConfetti();
+            confettiCanvas.style.opacity = 1;
+            createConfetti();
+            confettiInterval = setInterval(drawConfetti, 30);
+        }
+
+        function stopConfetti() {
+            confettiCanvas.style.opacity = 0;
+            clearInterval(confettiInterval);
+            particles = [];
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+
+        // --- Fonctions de Logique du Quiz ---
+
+        function loadQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const q = questions[currentQuestionIndex];
+                qCategory.textContent = q.category; // Afficher la catégorie
+                qText.textContent = q.text;
+                qCounter.textContent = `Question ${currentQuestionIndex + 1} / ${questions.length}`;
+                answerButtons.style.pointerEvents = 'auto'; // Réactiver les boutons
+                nextButton.style.display = 'none';
+                feedbackMessage.style.display = 'none';
+                feedbackMessage.className = 'feedback';
+            } else {
+                showResults();
+            }
+        }
+
+        function answerQuestion(userAnswerIsVrai) {
+            if (!quizActive) return;
+
+            const currentQuestion = questions[currentQuestionIndex];
+            const isCorrect = (userAnswerIsVrai === currentQuestion.correctAnswer);
+            
+            answerButtons.style.pointerEvents = 'none'; // Désactiver les boutons
+            nextButton.style.display = 'block';
+
+            // Déterminer la réponse correcte pour l'affichage
+            const actualAnswer = currentQuestion.correctAnswer ? "VRAI" : "FAUX";
+
+            // Construire le message de feedback avec l'explication et la bonne réponse
+            let feedbackContent = '';
+            if (isCorrect) {
+                score++;
+                scoreText.textContent = `Score: ${score}`;
+                feedbackMessage.classList.remove('incorrect');
+                feedbackMessage.classList.add('correct');
+                feedbackContent += `✅ <span class="answer-reveal">Bonne Réponse !</span> Votre choix est correct.`;
+            } else {
+                feedbackMessage.classList.remove('correct');
+                feedbackMessage.classList.add('incorrect');
+                feedbackContent += `❌ <span class="answer-reveal">Mauvaise Réponse !</span>`;
+            }
+            
+            // Ajouter la bonne réponse et l'explication détaillée dans tous les cas
+            feedbackContent += `<br>La bonne réponse était : <span class="text-yellow-300 font-bold">${actualAnswer}</span>.`;
+            feedbackContent += `<div class="explanation-text">${currentQuestion.explanation}</div>`;
+
+            feedbackMessage.innerHTML = feedbackContent;
+            feedbackMessage.style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizActive = false;
+            questionView.classList.add('hidden');
+            resultView.classList.remove('hidden');
+            finalScoreDisplay.textContent = `${score} / ${questions.length}`;
+            startConfetti();
+        }
+
+        function showSummary() {
+            stopConfetti();
+            resultView.classList.add('hidden');
+            summaryView.classList.remove('hidden');
+            
+            summaryContent.innerHTML = `
+                <h3 class="text-3xl font-bold mb-6 text-center text-yellow-500">Ses points forts de l'année</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${summaryPoints.map(point => `
+                        <div class="summary-point">
+                            <p class="text-xl font-bold text-white">${point.title}</p>
+                            <p class="text-gray-300 text-sm">${point.description}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <h3 class="text-3xl font-bold mt-10 mb-6 text-center text-yellow-500">Objectifs 2026</h3>
+                <div class="bg-gray-700 p-4 rounded-lg text-center">
+                    <p class="text-xl italic text-gray-100">${nextYearObjectives[0]}</p>
+                </div>
+            `;
+        }
+
+        function restartQuiz() {
+            stopConfetti();
+            currentQuestionIndex = 0;
+            score = 0;
+            quizActive = true;
+            scoreText.textContent = `Score: 0`;
+            summaryView.classList.add('hidden');
+            questionView.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        // Initialisation au chargement
+        window.onload = loadQuestion;
+
+    </script>
+</body>
+</html>
